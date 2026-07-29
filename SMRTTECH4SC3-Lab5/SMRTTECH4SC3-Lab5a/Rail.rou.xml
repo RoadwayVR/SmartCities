@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-03-17 08:16:43 by Eclipse SUMO netedit Version 1.21.0
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- VTypes -->
+    <vType id="t_0" vClass="rail"/>
+    <!-- Vehicles, persons and containers (sorted by depart) -->
+    <flow id="f_0" type="t_0" begin="0.00" line="AB" from="E0" to="E0" end="3600.00" number="1800">
+        <stop trainStop="ts_0" duration="30.00" until="50.00"/>
+        <stop trainStop="ts_1" duration="30.00" until="80.00"/>
+    </flow>
+    <personFlow id="pf_0" begin="0.00" end="3600.00" personsPerHour="1800">
+        <personTrip from="E2" to="E4" modes="public"/>
+    </personFlow>
+</routes>

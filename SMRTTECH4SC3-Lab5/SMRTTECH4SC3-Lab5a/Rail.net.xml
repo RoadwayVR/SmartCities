@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-03-17 08:16:43 by Eclipse SUMO netedit Version 1.21.0
+<neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
+
+    <input>
+        <sumocfg-file value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.sumocfg"/>
+        <additional-files value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.add.xml"/>
+        <route-files value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.rou.xml"/>
+        <data-files value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.dat.xml"/>
+        <sumo-net-file value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="D:\OneDrive - York University\Bussiness2\CodingPractical\Courses\IntroToRailwayEngineering\Week6\b\Railway\DirectoryName\Rail.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="0"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.50"/>
+        <rectangular-lane-cut value="0"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="0"/>
+    </pedestrian>
+
+    <netedit>
+        <new-network value="false"/>
+    </netedit>
+
+</neteditConfiguration>
+-->
+
+<net version="1.20" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="-187.16,-62.94,260.05,-1.29" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id="E0" from="J0" to="J1" priority="-1">
+        <lane id="E0_0" index="0" allow="rail" speed="13.89" length="447.24" shape="-187.14,-8.20 260.07,-2.89"/>
+    </edge>
+    <edge id="E1" from="J2" to="J3" priority="-1" shape="-91.36,-9.94 -51.85,-7.58 -41.17,-7.57">
+        <lane id="E1_0" index="0" allow="pedestrian" speed="13.89" length="52.04" shape="-89.81,-11.45 -51.80,-9.18 -41.17,-9.17"/>
+    </edge>
+    <edge id="E2" from="J2" to="J4" priority="-1">
+        <lane id="E2_0" index="0" allow="pedestrian" speed="13.89" length="40.52" shape="-92.75,-14.71 -91.03,-53.08"/>
+    </edge>
+    <edge id="E3" from="J5" to="J6" priority="-1">
+        <lane id="E3_0" index="0" allow="pedestrian" speed="13.89" length="20.67" shape="115.50,-5.07 98.78,-17.23"/>
+    </edge>
+    <edge id="E4" from="J6" to="J7" priority="-1">
+        <lane id="E4_0" index="0" allow="pedestrian" speed="13.89" length="53.73" shape="98.40,-19.42 128.63,-63.84"/>
+    </edge>
+
+    <junction id="J0" type="dead_end" x="-187.16" y="-6.60" incLanes="" intLanes="" shape="-187.16,-6.60 -187.12,-9.80"/>
+    <junction id="J1" type="dead_end" x="260.05" y="-1.29" incLanes="E0_0" intLanes="" shape="260.09,-4.49 260.05,-1.29"/>
+    <junction id="J2" type="dead_end" x="-91.36" y="-9.94" incLanes="" intLanes="" shape="-89.91,-9.85 -89.72,-13.05 -90.54,-13.26 -90.83,-13.49 -91.02,-13.79 -91.13,-14.18 -91.15,-14.64 -94.35,-14.78 -93.95,-12.17 -93.34,-11.22 -92.47,-10.52 -91.32,-10.07"/>
+    <junction id="J3" type="dead_end" x="-41.17" y="-7.57" incLanes="E1_0" intLanes="" shape="-41.17,-10.77 -41.17,-7.57"/>
+    <junction id="J4" type="dead_end" x="-89.43" y="-53.01" incLanes="E2_0" intLanes="" shape="-92.63,-53.15 -89.43,-53.01"/>
+    <junction id="J5" type="dead_end" x="116.44" y="-6.36" incLanes="" intLanes="" shape="116.44,-6.36 114.56,-3.77"/>
+    <junction id="J6" type="dead_end" x="99.72" y="-18.52" incLanes="E3_0" intLanes="" shape="97.84,-15.93 99.72,-18.52 97.07,-20.32 96.38,-18.69 96.39,-17.94 96.64,-17.23 97.12,-16.56"/>
+    <junction id="J7" type="dead_end" x="129.95" y="-62.94" incLanes="E4_0" intLanes="" shape="127.30,-64.74 129.95,-62.94"/>
+
+</net>
