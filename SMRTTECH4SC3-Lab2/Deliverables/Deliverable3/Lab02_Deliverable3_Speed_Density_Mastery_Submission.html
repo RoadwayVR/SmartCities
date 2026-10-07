@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SUMO Speed–Density Learning Explorer</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --text:#1f2937; --muted:#667085;
+    --line:#d0d5dd; --blue:#378add; --orange:#d85a30; --green:#1d9e75;
+    --purple:#7f56d9; --amber:#b7791f; --red:#b42318; --soft:#eef2f6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1450px;margin:auto;padding:26px}
+  h1{margin:0 0 6px;font-size:32px}
+  .subtitle{color:var(--muted);margin-bottom:18px}
+  .tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+  .tab-btn{background:transparent;color:#344054;border:0;border-bottom:3px solid transparent;border-radius:0;padding:12px 16px;font-size:16px}
+  .tab-btn.active{border-bottom-color:#111827;color:#111827}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .drop{
+    display:flex;width:100%;min-height:160px;border:2px dashed #98a2b3;border-radius:14px;
+    padding:30px;text-align:center;background:#fafbfc;cursor:pointer;align-items:center;
+    justify-content:center;flex-direction:column;gap:7px
+  }
+  .drop.drag{border-color:var(--blue);background:#f0f7ff}
+  .drop strong{display:block;font-size:19px;margin:0}
+  input[type=file]{display:none}
+  button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer;background:#111827;color:#fff;min-height:42px}
+  button.secondary{background:#e5e7eb;color:#111827}
+  button.outline{background:#fff;color:#344054;border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .small{font-size:13px;color:var(--muted)}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;color:#344054}
+  .edge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:14px}
+  .edge-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;cursor:pointer;transition:.15s}
+  .edge-card:hover{border-color:#98a2b3}
+  .edge-card.selected{outline:2px solid var(--blue);border-color:transparent}
+  .edge-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .edge-name{font-weight:800}
+  .badge{font-size:11px;font-weight:800;padding:4px 7px;border-radius:999px;white-space:nowrap}
+  .good{color:#067647;background:#ecfdf3}
+  .bad{color:#b42318;background:#fef3f2}
+  .edge-stats{font-size:12px;color:#667085;line-height:1.55;margin-top:8px}
+  .r2-good{color:#067647;font-weight:800}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .chart-card{border:1px solid #e4e7ec;border-radius:12px;padding:12px;background:#fff}
+  .chart-title{text-align:center;font-weight:800;font-size:17px;margin:2px 0 6px}
+  svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .question-layout{display:grid;grid-template-columns:minmax(330px,.9fr) minmax(500px,1.4fr);gap:18px;align-items:start}
+  .qbox{border:1px solid #e4e7ec;border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+  .qbox h3{font-size:15px;margin:0 0 8px}
+  .qbox label{display:block;font-size:13px;font-weight:700;margin:8px 0 5px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type=text],input[type=number]{
+    width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;padding:9px 10px;
+    font-size:16px;color:#111827;background:#fff
+  }
+  .short-input{max-width:150px}
+  .unit{font-size:13px;color:#667085}
+  .feedback{font-size:13px;margin-top:7px;min-height:18px}
+  .feedback.ok{color:#067647}.feedback.no{color:#b42318}.feedback.neutral{color:#667085}
+  .marker-help{background:#f8f9fc;border:1px solid #e4e7ec;border-radius:10px;padding:11px;font-size:13px;color:#475467;margin-bottom:10px}
+  .mode{font-weight:800;color:#6941c6}
+  .summary{padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e4e7ec;margin-top:12px}
+  .notice{padding:12px 14px;border-radius:10px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:13px;line-height:1.5}
+  .sticky{position:sticky;top:10px}
+  @media(max-width:980px){.question-layout{grid-template-columns:1fr}.sticky{position:static}}
+  @media(max-width:560px){.wrap{padding:14px}h1{font-size:26px}.panel{padding:14px}}
+  @media print{
+    body{background:#fff}.tabs,.upload-panel,.edge-select-panel,.no-print{display:none!important}
+    .tab-panel{display:block!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none}
+  }
+
+  .deliverable-tag{
+    display:inline-block;margin:0 0 10px;padding:6px 10px;border-radius:999px;
+    background:#eaf2f8;color:#123b5d;font-size:13px;font-weight:800
+  }
+  .student-info{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;
+    margin:0 0 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)
+  }
+  .student-info h2,.submission-panel h2{margin:0 0 7px;font-size:20px}
+  .student-info p,.submission-panel p{margin:0 0 14px;color:var(--muted);line-height:1.5}
+  .info-grid{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr;gap:12px}
+  .student-info label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#344054}
+  .student-info input,.student-info select{
+    display:block;width:100%;min-height:42px;border:1px solid var(--line);
+    border-radius:8px;padding:9px 10px;font-size:16px;background:#fff;color:#111827
+  }
+  .submission-panel{
+    background:#fff;border:2px solid #1f4e79;border-radius:14px;padding:20px;margin-top:18px
+  }
+  .submit-status{
+    margin-top:12px;padding:12px 14px;border-radius:9px;background:#f8fafc;
+    border:1px solid var(--line);line-height:1.45;font-size:14px
+  }
+  .submit-status.ready{background:#ecfdf3;border-color:#abefc6;color:#067647}
+  .submission-receipt{
+    display:none;margin-top:14px;padding:14px 16px;border-radius:9px;
+    background:#ecfdf3;border:1px solid #abefc6;color:#067647;line-height:1.5
+  }
+  .submission-receipt.show{display:block}
+  .submit-warning{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.45}
+  @media(max-width:900px){.info-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.info-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="deliverable-tag">Lab 02 · Deliverable 3</div>
+  <h1>Deliverable 3 – SUMO Speed–Density Learning Explorer</h1>
+  <div class="subtitle">Upload the SUMO edgeData XML, select one edge, inspect the speed–density diagram, complete all questions correctly, then generate and submit only the Deliverable 3 HTML file in Avenue.</div>
+
+
+  <div class="student-info">
+    <h2>Student Information</h2>
+    <p>Enter your information before completing Deliverable 3. It will be included in your generated submission file.</p>
+    <div class="info-grid">
+      <div>
+        <label for="studentName">Student Name</label>
+        <input id="studentName" type="text" autocomplete="name" placeholder="First and last name">
+      </div>
+      <div>
+        <label for="studentId">Student ID</label>
+        <input id="studentId" type="text" inputmode="numeric" placeholder="Student number">
+      </div>
+      <div>
+        <label for="labSection">Lab Section</label>
+        <select id="labSection">
+          <option value="">Select...</option>
+          <option value="L01">L01</option>
+          <option value="L02">L02</option>
+        </select>
+      </div>
+      <div>
+        <label for="groupNumber">Group</label>
+        <select id="groupNumber">
+          <option value="">Select...</option>
+          <option value="1">Group 1</option><option value="2">Group 2</option>
+          <option value="3">Group 3</option><option value="4">Group 4</option>
+          <option value="5">Group 5</option><option value="6">Group 6</option>
+          <option value="7">Group 7</option><option value="8">Group 8</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Explorer tabs">
+    <button class="tab-btn active" id="tab1Btn" type="button" role="tab" aria-selected="true">1. Select Edge & Diagram</button>
+    <button class="tab-btn" id="tab2Btn" type="button" role="tab" aria-selected="false" disabled>2. Questions & Markup</button>
+  </div>
+
+  <section class="tab-panel active" id="tab1" role="tabpanel">
+    <div class="panel upload-panel">
+      <label class="drop" id="dropZone">
+        <strong>Drag & drop your SUMO edgeData XML here</strong>
+        <span>or click to choose a file</span>
+        <input id="fileInput" type="file" accept=".xml,text/xml,application/xml"/>
+      </label>
+      <div id="fileMeta" class="meta"></div>
+    </div>
+
+    <div class="panel edge-select-panel" id="selectorPanel" style="display:none">
+      <h2 style="margin:0 0 4px">Select one roadway edge</h2>
+      <div class="small">For the lab example, Edge E16 will be selected automatically if it exists. For project corridors, choose one physically meaningful edge to analyze.</div>
+      <div id="edgeGrid" class="edge-grid"></div>
+      <div class="toolbar">
+        <button id="viewBtn" type="button" disabled>View selected edge</button>
+      </div>
+    </div>
+
+    <div class="panel" id="previewPanel" style="display:none">
+      <div id="previewHeader"></div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-title">Speed–Density (v–k)</div>
+        <div id="previewChart"></div>
+      </div>
+      <div class="toolbar">
+        <button id="questionsBtn" type="button">Continue to questions</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel" id="tab2" role="tabpanel">
+    <div class="panel">
+      <div class="question-layout">
+        <div>
+          <h2 style="margin:0 0 6px">Speed–Density Questions</h2>
+          <div class="small" id="questionEdgeLabel">Select an edge first.</div>
+
+          <div class="qbox">
+            <h3>Q1. Identify free-flow speed (vf)</h3>
+            <div class="small">Read vf from the fitted speed–density line. Enter the value, then place a circle at the vf intercept on the chart.</div>
+            <label for="vfInput">vf value</label>
+            <div class="row">
+              <input class="short-input" id="vfInput" type="number" step="0.01" min="0"/>
+              <span class="unit">m/s</span>
+              <button class="outline" id="placeVfBtn" type="button">Place vf circle</button>
+            </div>
+            <div id="vfFeedback" class="feedback neutral"></div>
+          </div>
+
+          <div class="qbox">
+            <h3>Q2. Identify jam density (kj)</h3>
+            <div class="small">Read kj where the fitted line reaches speed = 0. Enter the value, then place a circle at the kj intercept.</div>
+            <label for="kjInput">kj value</label>
+            <div class="row">
+              <input class="short-input" id="kjInput" type="number" step="0.1" min="0"/>
+              <span class="unit">veh/km</span>
+              <button class="outline" id="placeKjBtn" type="button">Place kj circle</button>
+            </div>
+            <div id="kjFeedback" class="feedback neutral"></div>
+          </div>
+
+          <div class="qbox">
+            <h3>Q3. Write the Greenshields speed–density equation</h3>
+            <label for="formulaInput">Equation</label>
+            <input id="formulaInput" type="text" placeholder="Example format: vs = vf × (1 - k / kj)"/>
+            <div id="formulaFeedback" class="feedback neutral"></div>
+          </div>
+
+          <div class="qbox">
+            <h3>Q4. Calculate speed at half jam density</h3>
+            <div class="small">Using your equation, calculate vs when k = kj / 2.</div>
+            <label for="halfInput">vs at k = kj / 2</label>
+            <div class="row">
+              <input class="short-input" id="halfInput" type="number" step="0.01" min="0"/>
+              <span class="unit">m/s</span>
+            </div>
+            <div id="halfFeedback" class="feedback neutral"></div>
+          </div>
+
+          <div class="qbox">
+            <h3>Q5. Check the two extreme conditions</h3>
+            <label for="zeroInput">When k = 0, what is vs?</label>
+            <div class="row">
+              <input class="short-input" id="zeroInput" type="number" step="0.01" min="0"/>
+              <span class="unit">m/s</span>
+            </div>
+            <label for="jamInput">When k = kj, what is vs?</label>
+            <div class="row">
+              <input class="short-input" id="jamInput" type="number" step="0.01" min="0"/>
+              <span class="unit">m/s</span>
+            </div>
+            <div id="extremeFeedback" class="feedback neutral"></div>
+          </div>
+
+          <div class="toolbar no-print">
+            <button id="checkBtn" type="button">Check answers</button>
+            <button class="secondary" id="resetQuizBtn" type="button">Reset answers</button>
+          </div>
+          <div id="scoreSummary" class="summary small">Complete the questions, place both circles, then click <b>Check answers</b>.</div>
+        </div>
+
+        <div class="sticky">
+          <div class="marker-help">
+            <b>Chart markup:</b> click <b>Place vf circle</b> or <b>Place kj circle</b>, then click the chart where you think that value belongs.
+            Current mode: <span class="mode" id="markerMode">none</span>.
+          </div>
+          <div class="chart-card">
+            <div class="chart-title" id="quizChartTitle">Speed–Density (v–k)</div>
+            <div id="quizChart"></div>
+          </div>
+          <div class="toolbar no-print">
+            <button class="secondary" id="clearMarkersBtn" type="button">Clear circles</button>
+            <button class="secondary" id="backBtn" type="button">Back to edge selection</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submission-panel no-print" id="submissionPanel">
+      <h2>Deliverable 3 Submission</h2>
+      <p>
+        Complete the questions with a score of <strong>7 / 7</strong>, place both chart circles correctly,
+        and complete your student information. Then generate the Deliverable 3 submission HTML.
+      </p>
+      <button id="generateSubmissionBtn" type="button" disabled>Generate Deliverable 3 Submission HTML</button>
+      <div id="submitStatus" class="submit-status">
+        Not ready: complete the activity with 7 / 7 and enter your student information.
+      </div>
+      <div id="submissionReceipt" class="submission-receipt"></div>
+      <div class="submit-warning">
+        <strong>Important:</strong> submit only the generated
+        <strong>Lab02_Deliverable3_...html</strong> file in Avenue. Keep a copy for your records.
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const root = document.currentScript.closest('body');
+  const MIN_R2 = 0.70;
+  const MIN_KJ_FRACTION = 0.50;
+  let edgeData = {};
+  let selectedEdge = null;
+  let currentFileName = "";
+  let markerMode = null;
+  let markerPositions = {vf:null, kj:null};
+
+  let quizAttempts = 0;
+  let quizCompleted = false;
+  let lastScore = 0;
+  let lastCheckDetails = null;
+
+
+  const $ = s => document.querySelector(s);
+  const dropZone = $("#dropZone");
+  const fileInput = $("#fileInput");
+
+  function switchTab(which){
+    [1,2].forEach(i=>{
+      const panel=$("#tab"+i), btn=$("#tab"+i+"Btn");
+      const active=i===which;
+      panel.classList.toggle("active", active);
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-selected", active?"true":"false");
+    });
+  }
+
+  $("#tab1Btn").addEventListener("click",()=>switchTab(1));
+  $("#tab2Btn").addEventListener("click",()=>{ if(selectedEdge) switchTab(2); });
+  $("#questionsBtn").addEventListener("click",()=>{ prepareQuiz(); switchTab(2); });
+  $("#backBtn").addEventListener("click",()=>switchTab(1));
+
+
+  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault(); dropZone.classList.remove("drag");
+    if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener("change", () => { if(fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+  function loadFile(file){
+    currentFileName=file.name;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const parser=new DOMParser();
+        const xml=parser.parseFromString(reader.result,"application/xml");
+        if(xml.querySelector("parsererror")) throw new Error("The XML file could not be parsed.");
+        edgeData=parseXML(xml);
+        const ids=Object.keys(edgeData);
+        if(!ids.length) throw new Error("No valid edgeData records with density and speed were found.");
+
+        selectedEdge = ids.includes("E16") ? "E16" : ids.sort(naturalSort)[0];
+
+        $("#fileMeta").innerHTML =
+          `<span><b>File:</b> ${escapeHTML(file.name)}</span>`+
+          `<span><b>Edges found:</b> ${ids.length}</span>`+
+          `<span><b>Intervals:</b> ${xml.querySelectorAll("interval").length}</span>`;
+        $("#selectorPanel").style.display="block";
+        $("#previewPanel").style.display="none";
+        $("#tab2Btn").disabled=true;
+        renderEdges();
+      }catch(err){ alert(err.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  function parseXML(xml){
+    const map={};
+    xml.querySelectorAll("interval").forEach(interval=>{
+      interval.querySelectorAll(":scope > edge").forEach(edge=>{
+        const id=edge.getAttribute("id");
+        const k=Number(edge.getAttribute("density"));
+        const v=Number(edge.getAttribute("speed"));
+        const q=Number(edge.getAttribute("flow"));
+        if(!id || !Number.isFinite(k)||!Number.isFinite(v)||k<=0||v<=0) return;
+        if(!map[id]) map[id]={k:[],v:[],q:[]};
+        map[id].k.push(k); map[id].v.push(v); map[id].q.push(Number.isFinite(q)?q:NaN);
+      });
+    });
+    Object.keys(map).forEach(id=>{
+      const d=map[id];
+      if(d.k.length<3){ delete map[id]; return; }
+      d.fit=greenshieldsFit(d.k,d.v);
+      d.minK=Math.min(...d.k); d.maxK=Math.max(...d.k); d.n=d.k.length;
+    });
+    return map;
+  }
+
+  function greenshieldsFit(k,v){
+    const n=k.length, mx=mean(k), my=mean(v);
+    let sxx=0,syy=0,sxy=0;
+    for(let i=0;i<n;i++){ const dx=k[i]-mx,dy=v[i]-my; sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy; }
+    const slope=sxx===0?NaN:sxy/sxx;
+    const vf=my-slope*mx;
+    const kj=(Number.isFinite(slope)&&slope!==0)?-vf/slope:NaN;
+    const r2=(sxx>0&&syy>0)?(sxy*sxy)/(sxx*syy):0;
+    let status="Not suitable",reasons=[];
+
+    // Simple teaching classification:
+    // R² > 0.70 = Suitable
+    // R² <= 0.70 = Not suitable
+    if(r2 > 0.70){
+      status="Suitable";
+    }else{
+      status="Not suitable";
+      reasons.push("R² ≤ 0.70");
+    }
+
+    return {slope,vf,kj,r2,status,reasons};
+  }
+
+  function renderEdges(){
+    const grid=$("#edgeGrid"); grid.innerHTML="";
+    Object.keys(edgeData).sort(naturalSort).forEach(id=>{
+      const d=edgeData[id],f=d.fit;
+      const card=document.createElement("div");
+      card.className="edge-card"+(selectedEdge===id?" selected":"");
+      card.innerHTML=`
+        <div class="edge-top">
+          <span class="edge-name">${escapeHTML(id)}</span>${badgeHTML(f.status)}
+        </div>
+        <div class="edge-stats">
+          Observations: ${d.n}<br>
+          Density range: ${fmt(d.minK,1)}–${fmt(d.maxK,1)} veh/km<br>
+          R²: <span class="${f.r2 > 0.70 ? "r2-good" : ""}">${fmt(f.r2,3)}</span>
+        </div>`;
+      card.addEventListener("click",()=>{selectedEdge=id;renderEdges();$("#viewBtn").disabled=false;});
+      grid.appendChild(card);
+    });
+    $("#viewBtn").disabled=!selectedEdge;
+  }
+
+  $("#viewBtn").addEventListener("click",()=>{
+    if(!selectedEdge) return;
+    renderPreview();
+    $("#previewPanel").style.display="block";
+    $("#tab2Btn").disabled=false;
+    $("#previewPanel").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+
+  function renderPreview(){
+    const d=edgeData[selectedEdge],f=d.fit;
+    $("#previewHeader").innerHTML=`
+      <h2 style="margin:0">Edge ${escapeHTML(selectedEdge)} — Speed–Density Diagram</h2>
+      <div class="small">R² = <span class="${f.r2 > 0.70 ? "r2-good" : ""}">${fmt(f.r2,3)}</span> &nbsp; | &nbsp; fitted vf = ${fmt(f.vf,2)} m/s &nbsp; | &nbsp; fitted kj = ${fmt(f.kj,1)} veh/km &nbsp; ${badgeHTML(f.status)}</div>`;
+    $("#previewChart").innerHTML=makeChartSVG(d,{interactive:false,markers:null});
+  }
+
+  function prepareQuiz(){
+    if(!selectedEdge) return;
+    markerMode=null; markerPositions={vf:null,kj:null};
+    quizAttempts=0; quizCompleted=false; lastScore=0; lastCheckDetails=null;
+    $("#markerMode").textContent="none";
+    updateSubmissionEligibility();
+    $("#questionEdgeLabel").textContent=`Use the selected Edge ${selectedEdge} diagram. Read values from the fitted line and show where they occur on the chart.`;
+    $("#quizChartTitle").textContent=`Edge ${selectedEdge} — Speed–Density (v–k)`;
+    clearAnswerFields();
+    renderQuizChart();
+  }
+
+  $("#placeVfBtn").addEventListener("click",()=>setMarkerMode("vf"));
+  $("#placeKjBtn").addEventListener("click",()=>setMarkerMode("kj"));
+  $("#clearMarkersBtn").addEventListener("click",()=>{markerPositions={vf:null,kj:null};markerMode=null;$("#markerMode").textContent="none";renderQuizChart();});
+  $("#resetQuizBtn").addEventListener("click",()=>{
+    clearAnswerFields();markerPositions={vf:null,kj:null};markerMode=null;
+    quizAttempts=0;quizCompleted=false;lastScore=0;lastCheckDetails=null;
+    $("#markerMode").textContent="none";renderQuizChart();updateSubmissionEligibility();
+  });
+
+  function setMarkerMode(mode){
+    markerMode=mode;
+    $("#markerMode").textContent=mode==="vf"?"place vf circle":"place kj circle";
+  }
+
+  function renderQuizChart(){
+    const d=edgeData[selectedEdge];
+    $("#quizChart").innerHTML=makeChartSVG(d,{interactive:true,markers:markerPositions});
+    const svg=$("#quizChart svg");
+    if(svg){
+      svg.style.cursor=markerMode?"crosshair":"default";
+      svg.addEventListener("click",e=>{
+        if(!markerMode) return;
+        const pt=screenToData(svg,e.clientX,e.clientY);
+        if(!pt) return;
+        markerPositions[markerMode]=pt;
+        const placed=markerMode;
+        markerMode=null;
+        $("#markerMode").textContent="none";
+        renderQuizChart();
+        const val = placed==="vf" ? $("#vfInput").value : $("#kjInput").value;
+        if(!val){
+          const fb=placed==="vf"?$("#vfFeedback"):$("#kjFeedback");
+          fb.textContent="Circle placed. Now enter the numerical value.";
+          fb.className="feedback neutral";
+        }
+      });
+    }
+  }
+
+  // Chart geometry mirrors makeChartSVG
+  function screenToData(svg,clientX,clientY){
+    const vb=svg.viewBox.baseVal;
+    const rect=svg.getBoundingClientRect();
+    const xSvg=(clientX-rect.left)*vb.width/rect.width;
+    const ySvg=(clientY-rect.top)*vb.height/rect.height;
+    const d=edgeData[selectedEdge], f=d.fit;
+    const bounds=chartBounds(d,f);
+    const W=700,H=470,L=72,R=22,T=24,B=66,pw=W-L-R,ph=H-T-B;
+    if(xSvg<L||xSvg>L+pw||ySvg<T||ySvg>T+ph) return null;
+    const x=bounds.xmin+(xSvg-L)/pw*(bounds.xmax-bounds.xmin);
+    const y=bounds.ymax-(ySvg-T)/ph*(bounds.ymax-bounds.ymin);
+    return [Math.max(0,x),Math.max(0,y)];
+  }
+
+  function chartBounds(d,f){
+    const curve=(Number.isFinite(f.vf)&&Number.isFinite(f.kj)&&f.kj>0)?curveVK(f):[];
+    const allX=d.k.concat(curve.map(p=>p[0]));
+    const allY=d.v.concat(curve.map(p=>p[1]));
+    let xmin=0,xmax=Math.max(...allX,1),ymin=0,ymax=Math.max(...allY,1);
+    xmax*=1.08; ymax*=1.10;
+    return {xmin,xmax,ymin,ymax};
+  }
+
+  function makeChartSVG(d,opt){
+    const f=d.fit,curve=(Number.isFinite(f.vf)&&Number.isFinite(f.kj)&&f.kj>0)?curveVK(f):[];
+    const b=chartBounds(d,f);
+    const W=700,H=470,L=72,R=22,T=24,B=66,pw=W-L-R,ph=H-T-B;
+    const sx=x=>L+(x-b.xmin)/(b.xmax-b.xmin)*pw;
+    const sy=y=>T+ph-(y-b.ymin)/(b.ymax-b.ymin)*ph;
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Speed density diagram">`;
+    s+=`<rect width="${W}" height="${H}" fill="white"/>`;
+    const ticks=5;
+    for(let i=0;i<=ticks;i++){
+      const xv=b.xmin+(b.xmax-b.xmin)*i/ticks,xp=sx(xv);
+      const yv=b.ymin+(b.ymax-b.ymin)*i/ticks,yp=sy(yv);
+      s+=`<line x1="${xp}" y1="${T}" x2="${xp}" y2="${T+ph}" stroke="#e5e7eb"/>`;
+      s+=`<line x1="${L}" y1="${yp}" x2="${L+pw}" y2="${yp}" stroke="#e5e7eb"/>`;
+      s+=`<text x="${xp}" y="${T+ph+22}" text-anchor="middle" font-size="12" fill="#475467">${shortNum(xv)}</text>`;
+      s+=`<text x="${L-9}" y="${yp+4}" text-anchor="end" font-size="12" fill="#475467">${shortNum(yv)}</text>`;
+    }
+    s+=`<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="#111827" stroke-width="1.5"/>`;
+    s+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="#111827" stroke-width="1.5"/>`;
+
+    if(curve.length){
+      const path=curve.map((p,i)=>(i?"L":"M")+sx(p[0]).toFixed(2)+","+sy(p[1]).toFixed(2)).join(" ");
+      s+=`<path d="${path}" fill="none" stroke="#d85a30" stroke-width="3"/>`;
+    }
+    d.k.forEach((x,i)=>s+=`<circle cx="${sx(x)}" cy="${sy(d.v[i])}" r="4.1" fill="#378add" fill-opacity=".62"/>`);
+
+    if(Number.isFinite(f.kj)&&Number.isFinite(f.vf)&&f.kj>0&&f.vf>0){
+      const kc=f.kj/2,vc=f.vf/2,x=sx(kc),y=sy(vc);
+      s+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+ph}" stroke="#1d9e75" stroke-dasharray="6 6" stroke-opacity=".42"/>`;
+      s+=`<line x1="${L}" y1="${y}" x2="${L+pw}" y2="${y}" stroke="#1d9e75" stroke-dasharray="6 6" stroke-opacity=".42"/>`;
+      s+=`<polygon points="${x},${y-9} ${x-9},${y+8} ${x+9},${y+8}" fill="#1d9e75"/>`;
+    }
+
+    if(opt.markers){
+      if(opt.markers.vf) s+=markerRing(sx(opt.markers.vf[0]),sy(opt.markers.vf[1]),"vf",$("#vfInput").value);
+      if(opt.markers.kj) s+=markerRing(sx(opt.markers.kj[0]),sy(opt.markers.kj[1]),"kj",$("#kjInput").value);
+    }
+
+    s+=`<text x="${L+pw/2}" y="${H-17}" text-anchor="middle" font-size="14" font-weight="700">Density k (veh/km)</text>`;
+    s+=`<text x="20" y="${T+ph/2}" text-anchor="middle" font-size="14" font-weight="700" transform="rotate(-90 20 ${T+ph/2})">Speed v (m/s)</text>`;
+    s+=`<circle cx="${W-135}" cy="29" r="4.5" fill="#378add" fill-opacity=".7"/><text x="${W-123}" y="33" font-size="12">SUMO</text>`;
+    s+=`<line x1="${W-76}" y1="29" x2="${W-54}" y2="29" stroke="#d85a30" stroke-width="3"/><text x="${W-48}" y="33" font-size="12">Fit</text>`;
+    s+=`</svg>`;
+    return s;
+  }
+
+  function markerRing(x,y,label,value){
+    const text=value?`${label} = ${value}`:label;
+    return `<circle cx="${x}" cy="${y}" r="14" fill="none" stroke="#7f56d9" stroke-width="4"/>
+            <text x="${x+18}" y="${y-12}" font-size="13" font-weight="800" fill="#6941c6">${escapeHTML(text)}</text>`;
+  }
+
+  function curveVK(f){
+    const pts=[];
+    for(let i=0;i<=180;i++){
+      const k=f.kj*i/180;
+      pts.push([k,Math.max(0,f.vf*(1-k/f.kj))]);
+    }
+    return pts;
+  }
+
+  $("#checkBtn").addEventListener("click",checkAnswers);
+
+  function checkAnswers(){
+    quizAttempts++;
+    const d=edgeData[selectedEdge],f=d.fit;
+    const vfAns=Number($("#vfInput").value),kjAns=Number($("#kjInput").value);
+    const halfAns=Number($("#halfInput").value),zeroAns=Number($("#zeroInput").value),jamAns=Number($("#jamInput").value);
+    let score=0,total=7;
+
+    const vfOK=near(vfAns,f.vf,Math.max(.15,.04*f.vf));
+    const kjOK=near(kjAns,f.kj,Math.max(3,.04*f.kj));
+    setFeedback("#vfFeedback",vfOK,`Expected approximately ${fmt(f.vf,2)} m/s.`);
+    setFeedback("#kjFeedback",kjOK,`Expected approximately ${fmt(f.kj,1)} veh/km.`);
+    if(vfOK)score++; if(kjOK)score++;
+
+    const formulaOK=checkFormula($("#formulaInput").value);
+    setFeedback("#formulaFeedback",formulaOK,"Use: vs = vf × (1 - k / kj)");
+    if(formulaOK)score++;
+
+    const halfOK=near(halfAns,f.vf/2,Math.max(.15,.04*f.vf));
+    setFeedback("#halfFeedback",halfOK,`At k = kj / 2, vs = vf / 2 ≈ ${fmt(f.vf/2,2)} m/s.`);
+    if(halfOK)score++;
+
+    const zeroOK=near(zeroAns,f.vf,Math.max(.15,.04*f.vf));
+    const jamOK=near(jamAns,0,.15);
+    const ext=$("#extremeFeedback");
+    if(zeroOK&&jamOK){ext.textContent="Correct: k = 0 gives vs = vf, and k = kj gives vs = 0.";ext.className="feedback ok";score+=2;}
+    else{ext.textContent=`Check again: at k = 0, vs ≈ ${fmt(f.vf,2)} m/s; at k = kj, vs = 0 m/s.`;ext.className="feedback no";score+=(zeroOK?1:0)+(jamOK?1:0);}
+
+    const markerOK=checkMarkers(f);
+    if(markerOK)score++;
+
+    lastScore=score;
+    lastCheckDetails={
+      vfOK,kjOK,formulaOK,halfOK,zeroOK,jamOK,markerOK,
+      vfAnswer:$("#vfInput").value,
+      kjAnswer:$("#kjInput").value,
+      formulaAnswer:$("#formulaInput").value,
+      halfAnswer:$("#halfInput").value,
+      zeroAnswer:$("#zeroInput").value,
+      jamAnswer:$("#jamInput").value
+    };
+    quizCompleted=(score===total);
+    $("#scoreSummary").innerHTML=`<b>Score: ${score} / ${total}</b> &nbsp; | &nbsp; <b>Check attempts: ${quizAttempts}</b><br>${markerOK?"Both circles are placed close to the correct intercepts.":"Place the vf circle near (k = 0, v = vf) and the kj circle near (k = kj, v = 0)."}<br><span class="small">The purpose is to connect the numerical parameters to their physical positions on the fitted line.</span>`;
+    updateSubmissionEligibility();
+  }
+
+  function checkMarkers(f){
+    if(!markerPositions.vf||!markerPositions.kj) return false;
+    const vf=markerPositions.vf,kj=markerPositions.kj;
+    const vfOK=Math.abs(vf[0])<=Math.max(8,.05*f.kj) && Math.abs(vf[1]-f.vf)<=Math.max(.35,.08*f.vf);
+    const kjOK=Math.abs(kj[0]-f.kj)<=Math.max(8,.06*f.kj) && kj[1]<=Math.max(.35,.08*f.vf);
+    return vfOK&&kjOK;
+  }
+
+  function setFeedback(sel,ok,hint){
+    const el=$(sel);
+    el.textContent=ok?"Correct.":hint;
+    el.className="feedback "+(ok?"ok":"no");
+  }
+
+  function checkFormula(s){
+    const t=String(s).toLowerCase()
+      .replace(/\s+/g,"").replace(/×/g,"*").replace(/[−–—]/g,"-")
+      .replace(/v_s/g,"vs").replace(/v_f/g,"vf").replace(/k_j/g,"kj");
+    const accepted=[
+      "vs=vf*(1-k/kj)","vs=vf(1-k/kj)",
+      "vs=vf-vf*k/kj","vs=vf-(vf*k/kj)"
+    ];
+    return accepted.includes(t);
+  }
+
+  function clearAnswerFields(){
+    ["vfInput","kjInput","formulaInput","halfInput","zeroInput","jamInput"].forEach(id=>$("#"+id).value="");
+    ["vfFeedback","kjFeedback","formulaFeedback","halfFeedback","extremeFeedback"].forEach(id=>{
+      const el=$("#"+id);el.textContent="";el.className="feedback neutral";
+    });
+    $("#scoreSummary").innerHTML='Complete the questions, place both circles, then click <b>Check answers</b>.';
+  }
+
+
+  function getStudentInfo(){
+    return {
+      name:$("#studentName").value.trim(),
+      student_id:$("#studentId").value.trim(),
+      section:$("#labSection").value,
+      group:$("#groupNumber").value
+    };
+  }
+
+  function studentInfoValid(){
+    const s=getStudentInfo();
+    return s.name.length>=2 && s.student_id.length>=4 && !!s.section && !!s.group;
+  }
+
+  function updateSubmissionEligibility(){
+    const btn=$("#generateSubmissionBtn"), status=$("#submitStatus");
+    if(!btn || !status) return;
+    const ready=quizCompleted && lastScore===7 && studentInfoValid() && !!selectedEdge;
+    btn.disabled=!ready;
+
+    if(ready){
+      status.className="submit-status ready";
+      status.innerHTML="✓ Deliverable 3 is complete (7 / 7). You can now generate the submission HTML.";
+    }else{
+      status.className="submit-status";
+      const missing=[];
+      if(!selectedEdge) missing.push("select an edge");
+      if(!quizCompleted || lastScore!==7) missing.push("achieve 7 / 7");
+      if(!studentInfoValid()) missing.push("complete student information");
+      status.textContent="Not ready: "+missing.join(" · ");
+    }
+  }
+
+  ["studentName","studentId","labSection","groupNumber"].forEach(id=>{
+    const el=$("#"+id);
+    if(el){
+      el.addEventListener("input",updateSubmissionEligibility);
+      el.addEventListener("change",updateSubmissionEligibility);
+    }
+  });
+
+  function safeFilenamePart(value){
+    return String(value).replace(/[^a-z0-9_-]+/gi,"_").replace(/^_+|_+$/g,"").slice(0,45)||"Student";
+  }
+
+  function submissionEscape(value){
+    return String(value).replace(/[&<>"']/g,ch=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[ch]));
+  }
+
+  function makeSubmissionId(studentId){
+    const now=new Date(),pad=n=>String(n).padStart(2,"0");
+    const stamp=now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+"-"+
+      pad(now.getHours())+pad(now.getMinutes())+pad(now.getSeconds());
+    return "LAB02-D3-"+safeFilenamePart(studentId)+"-"+stamp;
+  }
+
+  function generateDeliverable3Submission(){
+    updateSubmissionEligibility();
+    if(!quizCompleted || lastScore!==7 || !studentInfoValid() || !selectedEdge) return;
+
+    const student=getStudentInfo();
+    const d=edgeData[selectedEdge], f=d.fit;
+    const generatedAt=new Date().toISOString();
+    const submissionId=makeSubmissionId(student.student_id);
+    const chartSVG=makeChartSVG(d,{interactive:false,markers:markerPositions});
+
+    const payload={
+      schema:"SMRTTECH4SC3_LAB02_D3_SUBMISSION_V1",
+      course:"SMRTTECH 4SC3 – Smart Cities & Communities",
+      lab:"Lab 02",
+      deliverable:"Deliverable 3",
+      submission_id:submissionId,
+      generated_at:generatedAt,
+      student,
+      source_xml:currentFileName,
+      selected_edge:selectedEdge,
+      completion:{complete:true,score:lastScore,total:7,check_attempts:quizAttempts},
+      fit:{
+        status:f.status,
+        r2:f.r2,
+        vf_m_per_s:f.vf,
+        kj_veh_per_km:f.kj,
+        observed_density_min:d.minK,
+        observed_density_max:d.maxK,
+        observations:d.n
+      },
+      answers:{
+        vf_m_per_s:Number($("#vfInput").value),
+        kj_veh_per_km:Number($("#kjInput").value),
+        equation:$("#formulaInput").value,
+        speed_at_half_kj_m_per_s:Number($("#halfInput").value),
+        speed_at_zero_density_m_per_s:Number($("#zeroInput").value),
+        speed_at_jam_density_m_per_s:Number($("#jamInput").value),
+        vf_marker:markerPositions.vf,
+        kj_marker:markerPositions.kj
+      }
+    };
+
+    const payloadJSON=JSON.stringify(payload).replace(/</g,"\\u003c");
+
+    const finalHTML=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lab 02 – Deliverable 3 Submission</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f4f6f8;color:#1f2937}
+.wrap{max-width:1050px;margin:30px auto;padding:0 18px 40px}
+.head{background:#1f4e79;color:#fff;padding:22px 26px;border-radius:12px 12px 0 0}
+.head h1{margin:0 0 6px}.head p{margin:0;opacity:.9}
+.card{background:#fff;border:1px solid #d0d5dd;border-top:0;padding:26px;border-radius:0 0 12px 12px}
+.complete{padding:16px;border:1px solid #abefc6;background:#ecfdf3;color:#067647;border-radius:9px;font-size:20px;font-weight:700;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px;margin-bottom:22px}
+.item{padding:10px 0;border-bottom:1px solid #eaecf0}.label{font-size:12px;color:#667085;font-weight:700;text-transform:uppercase}.value{margin-top:4px;font-weight:700}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}th,td{border:1px solid #d0d5dd;padding:9px;text-align:left}th{background:#eef2f6}
+.chart{margin-top:18px;border:1px solid #d0d5dd;border-radius:10px;padding:10px}.chart svg{width:100%;height:auto}
+.note{margin-top:20px;padding:13px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e;line-height:1.45}
+@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="head"><h1>Lab 02 – Deliverable 3 Submission</h1><p>SMRTTECH 4SC3 – Smart Cities & Communities</p></div>
+<div class="card">
+<div class="complete">✓ DELIVERABLE 3 COMPLETE — 7 / 7</div>
+
+<div class="grid">
+<div class="item"><div class="label">Student</div><div class="value">${submissionEscape(student.name)}</div></div>
+<div class="item"><div class="label">Student ID</div><div class="value">${submissionEscape(student.student_id)}</div></div>
+<div class="item"><div class="label">Lab Section</div><div class="value">${submissionEscape(student.section)}</div></div>
+<div class="item"><div class="label">Group</div><div class="value">Group ${submissionEscape(student.group)}</div></div>
+<div class="item"><div class="label">Source XML</div><div class="value">${submissionEscape(currentFileName)}</div></div>
+<div class="item"><div class="label">Selected Edge</div><div class="value">${submissionEscape(selectedEdge)}</div></div>
+<div class="item"><div class="label">Submission ID</div><div class="value">${submissionEscape(submissionId)}</div></div>
+<div class="item"><div class="label">Generated</div><div class="value">${submissionEscape(new Date(generatedAt).toLocaleString())}</div></div>
+<div class="item"><div class="label">Check Attempts</div><div class="value">${quizAttempts}</div></div>
+<div class="item"><div class="label">Fit Suitability</div><div class="value">${submissionEscape(f.status)}</div></div>
+</div>
+
+<h2>Greenshields Results</h2>
+<table>
+<thead><tr><th>Parameter</th><th>Submitted / Fitted Value</th></tr></thead>
+<tbody>
+<tr><td>R²</td><td>${fmt(f.r2,3)}</td></tr>
+<tr><td>Free-flow speed (vf)</td><td>${submissionEscape($("#vfInput").value)} m/s</td></tr>
+<tr><td>Jam density (kj)</td><td>${submissionEscape($("#kjInput").value)} veh/km</td></tr>
+<tr><td>Greenshields equation</td><td>${submissionEscape($("#formulaInput").value)}</td></tr>
+<tr><td>Speed at k = kj / 2</td><td>${submissionEscape($("#halfInput").value)} m/s</td></tr>
+<tr><td>Speed at k = 0</td><td>${submissionEscape($("#zeroInput").value)} m/s</td></tr>
+<tr><td>Speed at k = kj</td><td>${submissionEscape($("#jamInput").value)} m/s</td></tr>
+<tr><td>Density range observed</td><td>${fmt(d.minK,1)}–${fmt(d.maxK,1)} veh/km</td></tr>
+<tr><td>Observations</td><td>${d.n}</td></tr>
+</tbody>
+</table>
+
+<h2>Submitted Chart Markup</h2>
+<div class="chart">${chartSVG}</div>
+
+<div class="note"><strong>Submission record:</strong> upload this exact generated <b>Deliverable 3</b> HTML file to Avenue and keep a copy. Do not edit the generated file after creation.</div>
+</div></div>
+<script id="lab02-d3-submission-data" type="application/json">${payloadJSON}<\/script>
+</body></html>`;
+
+    const blob=new Blob([finalHTML],{type:"text/html;charset=utf-8"});
+    const a=document.createElement("a");
+    const idPart=safeFilenamePart(student.student_id),namePart=safeFilenamePart(student.name);
+    const fileName="Lab02_Deliverable3_"+idPart+"_"+namePart+".html";
+    a.href=URL.createObjectURL(blob);a.download=fileName;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+
+    const receipt=$("#submissionReceipt");
+    receipt.className="submission-receipt show";
+    receipt.innerHTML="<strong>✓ Deliverable 3 submission generated.</strong><br>"+
+      "Submission ID: <b>"+submissionEscape(submissionId)+"</b><br>"+
+      "File: <b>"+submissionEscape(fileName)+"</b><br>"+
+      "Upload this generated HTML file to Avenue.";
+  }
+
+  $("#generateSubmissionBtn").addEventListener("click",generateDeliverable3Submission);
+  updateSubmissionEligibility();
+
+  function badgeHTML(status){
+    const cls=status==="Suitable"?"good":"bad";
+    return `<span class="badge ${cls}">${status}</span>`;
+  }
+  function mean(a){return a.reduce((x,y)=>x+y,0)/a.length}
+  function near(a,b,t){return Number.isFinite(a)&&Math.abs(a-b)<=t}
+  function naturalSort(a,b){return a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"})}
+  function shortNum(x){if(Math.abs(x)>=1000)return Math.round(x).toLocaleString();if(Math.abs(x)>=100)return Math.round(x).toString();if(Math.abs(x)>=10)return x.toFixed(0);return x.toFixed(1)}
+  function fmt(x,n){return Number.isFinite(x)?Number(x).toFixed(n):"—"}
+  function escapeHTML(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
+})();
+</script>
+</body>
+</html>
