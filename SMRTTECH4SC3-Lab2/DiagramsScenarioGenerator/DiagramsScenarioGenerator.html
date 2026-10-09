@@ -41,7 +41,7 @@ ol{line-height:1.75}.code{white-space:pre-wrap;background:#101828;color:#f2f4f7;
  <div><label>New prepared scenario folder</label><input id="folderName"></div>
  <div><label>Simulation step length</label><input class="fixed" value="0.2 s" readonly></div>
  <div><label>Aggregation period (seconds)</label><input id="period" type="number" min="1" step="1" value="100"></div>
- <div><label>edgeData output filename</label><input id="outputName" value="DiagramsBaseScenario.xml"></div>
+ <div><label>edgeData output filename</label><input id="outputName" value="DiagramsScenario.xml"></div>
  <div><label>Generated additional filename</label><input id="addName" value="FundamentalDiagram.add.xml"></div>
  <div><label>SUMO output subfolder</label><input id="outputSubfolder" value="output"></div>
 </div>
@@ -141,7 +141,7 @@ buildBtn.onclick=async()=>{
  statusBox.style.display="block";
  statusBox.innerHTML="<b>Build started...</b> Validating settings.";
  let project=safe(folderName.value.trim())||safe(source.name+"_FD");
- let outName=outputName.value.trim()||"DiagramsBaseScenario.xml";
+ let outName=outputName.value.trim()||"DiagramsScenario.xml";
  let add=addName.value.trim()||"FundamentalDiagram.add.xml";
  let sub=safe(outputSubfolder.value.trim())||"output";
  const per=Number(period.value);
